@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyMate AI – Personalized Study Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface2: #f0f2f8;
+      --border: #dde1ec;
+      --text: #1a1d2e;
+      --muted: #5b6380;
+      --accent: #3b5bdb;
+      --accent-light: #eef1fd;
+      --accent2: #7048e8;
+      --success: #2f9e44;
+      --warn: #e67700;
+      --danger: #c92a2a;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(59,91,219,.10);
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #3b5bdb 0%, #7048e8 100%);
+      color: #fff;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(59,91,219,.25);
+    }
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .logo span { opacity: .7; font-weight: 400; font-size: 14px; margin-left: 6px; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: rgba(255,255,255,.85);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background .15s;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,.25); }
+    .nav-tab.active { background: rgba(255,255,255,.95); color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    main { max-width: 960px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    /* ── SECTION PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+    .card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    input[type=text], input[type=date], input[type=number], select, textarea {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,91,219,.12);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .tag-input-wrapper { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; background: #fff; min-height: 42px; cursor: text; }
+    .tag-input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,91,219,.12); }
+    .tag { background: var(--accent-light); color: var(--accent); border-radius: 5px; padding: 2px 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .tag .remove { cursor: pointer; opacity: .6; font-size: 14px; line-height: 1; }
+    .tag .remove:hover { opacity: 1; }
+    .tag-input { border: none; outline: none; font-size: 14px; min-width: 100px; flex: 1; font-family: inherit; color: var(--text); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .form-actions { margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ── TIMETABLE ── */
+    .timetable-grid { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+    thead th { background: var(--accent); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
+    thead th:first-child { border-radius: 7px 0 0 0; }
+    thead th:last-child { border-radius: 0 7px 0 0; }
+    tbody tr:nth-child(even) { background: var(--surface2); }
+    tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .slot-badge {
+      display: inline-block; border-radius: 5px; padding: 2px 8px; font-size: 12px;
+      font-weight: 600; margin: 2px 2px 2px 0;
+    }
+    .slot-study  { background: #e8f5e9; color: #2e7d32; }
+    .slot-revision { background: #fff8e1; color: #e65100; }
+    .slot-rest   { background: #f3e5f5; color: #6a1b9a; }
+    .slot-exam   { background: #ffebee; color: #b71c1c; }
+    .slot-free   { background: #f5f5f5; color: #757575; }
+
+    /* ── PLAN CARDS ── */
+    .plan-section { margin-bottom: 28px; }
+    .plan-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .plan-section h3::before { content: ''; display: inline-block; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+
+    .goal-list, .tip-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .goal-list li, .tip-list li {
+      background: var(--surface2); border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; border-left: 3px solid var(--accent);
+    }
+    .tip-list li { border-left-color: var(--accent2); }
+
+    .revision-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .rev-chip {
+      background: var(--accent-light); color: var(--accent);
+      border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600;
+    }
+    .rev-chip.weak { background: #fff0f0; color: var(--danger); }
+
+    .subject-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .subject-card { background: var(--surface2); border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+    .subject-card .s-name { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+    .subject-card .s-hours { font-size: 12px; color: var(--muted); }
+    .s-bar { height: 5px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .s-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s; }
+    .s-bar-fill.weak { background: var(--danger); }
+
+    /* ── CHAT ── */
+    .chat-wrap { display: flex; flex-direction: column; height: 520px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+    .chat-msg { display: flex; gap: 10px; align-items: flex-start; max-width: 85%; }
+    .chat-msg.user { flex-direction: row-reverse; align-self: flex-end; }
+    .chat-avatar {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+    }
+    .chat-msg.ai .chat-avatar { background: var(--accent); color: #fff; }
+    .chat-msg.user .chat-avatar { background: var(--accent2); color: #fff; }
+    .bubble {
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 14px; font-size: 13.5px; line-height: 1.6;
+    }
+    .chat-msg.user .bubble { background: var(--accent-light); border-color: #c5cffa; }
+    .bubble p { margin: 0 0 8px; }
+    .bubble p:last-child { margin-bottom: 0; }
+    .bubble ul { padding-left: 18px; margin: 6px 0; }
+    .bubble li { margin: 3px 0; }
+    .bubble strong { color: var(--accent); }
+    .typing { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+    .typing span { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: bounce .9s infinite; }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)} }
+
+    .chat-input-row { display: flex; gap: 10px; margin-top: 12px; }
+    .chat-input-row input { flex: 1; }
+    .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .quick-chip {
+      background: var(--accent-light); color: var(--accent);
+      border: 1px solid #c5cffa; border-radius: 20px;
+      padding: 4px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+      transition: background .15s;
+    }
+    .quick-chip:hover { background: #dde4fb; }
+
+    /* ── SETUP PROGRESS ── */
+    .step-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+    .step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+    .step::after { content:''; position:absolute; top:14px; left:50%; width:100%; height:2px; background:var(--border); z-index:0; }
+    .step:last-child::after { display:none; }
+    .step-dot {
+      width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; position: relative; z-index: 1;
+      color: var(--muted);
+    }
+    .step.done .step-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+    .step-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-align: center; }
+    .step.active .step-label { color: var(--accent); font-weight: 600; }
+
+    /* ── WELCOME HERO ── */
+    .hero { text-align: center; padding: 48px 24px 36px; }
+    .hero h1 { font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -.5px; margin-bottom: 10px; }
+    .hero h1 em { color: var(--accent); font-style: normal; }
+    .hero p { color: var(--muted); font-size: 16px; max-width: 520px; margin: 0 auto 28px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 32px; }
+    .feature-item { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 18px; text-align: left; }
+    .feature-item .fi-icon { font-size: 22px; margin-bottom: 8px; }
+    .feature-item .fi-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .feature-item .fi-desc { font-size: 12px; color: var(--muted); }
+
+    /* ── MISC ── */
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+    .alert-info { background: var(--accent-light); color: var(--accent); border: 1px solid #c5cffa; }
+    .alert-success { background: #eefbf1; color: var(--success); border: 1px solid #b2e5be; }
+
+    .badge { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+    .badge-blue { background: var(--accent-light); color: var(--accent); }
+    .badge-purple { background: #f3eeff; color: var(--accent2); }
+
+    .powered-by { font-size: 11px; color: var(--muted); text-align: right; margin-top: 8px; }
+    .powered-by span { font-weight: 600; color: var(--accent2); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state .es-icon { font-size: 40px; margin-bottom: 10px; }
+
+    /* ── SCROLLBAR ── */
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 600px) {
+      header { padding: 0 12px; }
+      .logo span { display: none; }
+      .nav-tab { padding: 5px 10px; font-size: 12px; }
+      main { padding: 16px 10px 40px; }
+      .hero h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">StudyMate <em style="color:#fff;font-style:normal;">AI</em><span>Powered by IBM Granite</span></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('setup')">Setup</button>
+    <button class="nav-tab" onclick="showPage('plan')">My Plan</button>
+    <button class="nav-tab" onclick="showPage('chat')">AI Chat</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ══ HOME PAGE ══ -->
+  <div id="page-home" class="page active">
+    <div class="hero">
+      <h1>Your <em>AI-Powered</em> Study Partner</h1>
+      <p>StudyMate AI builds a personalised timetable, revision plan, and daily goals tailored to your subjects, schedule, and exam dates.</p>
+      <button class="btn btn-primary" style="font-size:15px;padding:12px 30px;" onclick="showPage('setup')">Get Started →</button>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-item"><div class="fi-icon">📅</div><div class="fi-title">Smart Timetable</div><div class="fi-desc">Auto-generated weekly schedule based on your free hours and exam proximity.</div></div>
+      <div class="feature-item"><div class="fi-icon">📝</div><div class="fi-title">Revision Plan</div><div class="fi-desc">Spaced-repetition revision calendar with extra focus on your weak subjects.</div></div>
+      <div class="feature-item"><div class="fi-icon">🎯</div><div class="fi-title">Daily Goals</div><div class="fi-desc">Clear, achievable daily targets so you always know what to study.</div></div>
+      <div class="feature-item"><div class="fi-icon">💬</div><div class="fi-title">AI Chat Assistant</div><div class="fi-desc">Ask anything about your subjects — get explanations, tips, and examples.</div></div>
+    </div>
+    <div class="alert alert-info">
+      <strong>Demo Mode:</strong> StudyMate AI runs fully in the browser using an IBM Granite-style AI engine. No sign-in or API key required.
+    </div>
+  </div>
+
+  <!-- ══ SETUP PAGE ══ -->
+  <div id="page-setup" class="page">
+
+    <div class="step-indicator" id="step-indicator">
+      <div class="step active" id="step1-dot"><div class="step-dot">1</div><div class="step-label">Profile</div></div>
+      <div class="step" id="step2-dot"><div class="step-dot">2</div><div class="step-label">Subjects</div></div>
+      <div class="step" id="step3-dot"><div class="step-dot">3</div><div class="step-label">Schedule</div></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="setup-step1" class="card">
+      <h2>Student Profile</h2>
+      <div class="subtitle">Tell us about yourself so we can personalise your plan.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="s-name">Full Name</label>
+          <input type="text" id="s-name" placeholder="e.g. Priya Sharma" />
+        </div>
+        <div class="form-group">
+          <label for="s-course">Course / Degree</label>
+          <input type="text" id="s-course" placeholder="e.g. B.Tech Computer Science" />
+        </div>
+        <div class="form-group">
+          <label for="s-semester">Semester / Year</label>
+          <select id="s-semester">
+            <option value="">Select…</option>
+            <option>Semester 1</option><option>Semester 2</option>
+            <option>Semester 3</option><option>Semester 4</option>
+            <option>Semester 5</option><option>Semester 6</option>
+            <option>Semester 7</option><option>Semester 8</option>
+            <option>Year 1</option><option>Year 2</option>
+            <option>Year 3</option><option>Year 4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="s-exam-date">First Exam Date</label>
+          <input type="date" id="s-exam-date" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="goStep(2)">Next: Subjects →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="setup-step2" class="card" style="display:none;">
+      <h2>Subjects & Weak Areas</h2>
+      <div class="subtitle">Add all subjects you're studying, then mark the ones you find difficult.</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>All Subjects <span style="font-weight:400;">(press Enter or comma to add)</span></label>
+          <div class="tag-input-wrapper" id="subjects-wrapper" onclick="document.getElementById('subj-input').focus()">
+            <input type="text" class="tag-input" id="subj-input" placeholder="e.g. Mathematics" />
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Weak / Difficult Subjects <span style="font-weight:400;">(press Enter or comma)</span></label>
+          <div class="tag-input-wrapper" id="weak-wrapper" onclick="document.getElementById('weak-input').focus()">
+            <input type="text" class="tag-input" id="weak-input" placeholder="e.g. Thermodynamics" />
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Next: Schedule →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="setup-step3" class="card" style="display:none;">
+      <h2>Your Study Schedule</h2>
+      <div class="subtitle">Set your availability so the timetable fits your real life.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="s-wkday">Weekday Study Hours / Day</label>
+          <select id="s-wkday">
+            <option value="1">1 hour</option><option value="2">2 hours</option>
+            <option value="3">3 hours</option><option value="4">4 hours</option>
+            <option value="5">5 hours</option><option value="6">6 hours</option>
+            <option value="8">8 hours</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="s-wkend">Weekend Study Hours / Day</label>
+          <select id="s-wkend">
+            <option value="2">2 hours</option><option value="3">3 hours</option>
+            <option value="4">4 hours</option><option value="5">5 hours</option>
+            <option value="6">6 hours</option><option value="8">8 hours</option>
+            <option value="10">10 hours</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="s-pref">Preferred Study Time</label>
+          <select id="s-pref">
+            <option value="morning">Morning (6 AM – 12 PM)</option>
+            <option value="afternoon">Afternoon (12 PM – 5 PM)</option>
+            <option value="evening">Evening (5 PM – 9 PM)</option>
+            <option value="night">Night (9 PM – 1 AM)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="s-session">Session Length</label>
+          <select id="s-session">
+            <option value="25">25 min (Pomodoro)</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>60 min</option>
+            <option value="90">90 min</option>
+            <option value="120">2 hours</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" id="gen-btn" onclick="generatePlan()">✦ Generate My Plan</button>
+      </div>
+    </div>
+
+  </div><!-- /setup -->
+
+  <!-- ══ PLAN PAGE ══ -->
+  <div id="page-plan" class="page">
+    <div id="plan-empty" class="empty-state">
+      <div class="es-icon">📚</div>
+      <p><strong>No plan yet.</strong><br/>Complete the setup to generate your personalised study plan.</p>
+      <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="showPage('setup')">Go to Setup</button>
+    </div>
+    <div id="plan-content" style="display:none;">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h2 id="plan-greeting">Your Study Plan</h2>
+            <div class="subtitle" id="plan-meta"></div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('setup')">✎ Edit Profile</button>
+        </div>
+      </div>
+
+      <!-- Subject Overview -->
+      <div class="card">
+        <div class="plan-section">
+          <h3>Subject Overview</h3>
+          <div class="subject-cards" id="subject-cards"></div>
+        </div>
+      </div>
+
+      <!-- Weekly Timetable -->
+      <div class="card">
+        <div class="plan-section">
+          <h3>Weekly Timetable</h3>
+          <div class="timetable-grid">
+            <table id="timetable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revision Plan -->
+      <div class="card">
+        <div class="plan-section">
+          <h3>Revision Plan</h3>
+          <div id="revision-plan"></div>
+        </div>
+      </div>
+
+      <!-- Daily Goals -->
+      <div class="card">
+        <div class="plan-section">
+          <h3>Today's Daily Goals</h3>
+          <ul class="goal-list" id="daily-goals"></ul>
+        </div>
+      </div>
+
+      <!-- Study Tips -->
+      <div class="card">
+        <div class="plan-section">
+          <h3>Personalised Study Tips</h3>
+          <ul class="tip-list" id="study-tips"></ul>
+        </div>
+        <div class="powered-by">Powered by <span>IBM Granite (Demo Mode)</span></div>
+      </div>
+
+    </div>
+  </div><!-- /plan -->
+
+  <!-- ══ CHAT PAGE ══ -->
+  <div id="page-chat" class="page">
+    <div class="card">
+      <h2>AI Study Assistant</h2>
+      <div class="subtitle">Ask me anything about your subjects, concepts, or study strategies.</div>
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg ai">
+            <div class="chat-avatar">G</div>
+            <div class="bubble">
+              <p>Hi! I'm your <strong>StudyMate AI</strong> assistant, powered by IBM Granite. 👋</p>
+              <p>I can help you understand complex topics, answer subject questions, suggest mnemonics, or explain anything in simple terms. What would you like to study today?</p>
+            </div>
+          </div>
+        </div>
+        <div class="quick-chips" id="quick-chips">
+          <button class="quick-chip" onclick="sendQuick(this)">Explain Newton's Laws</button>
+          <button class="quick-chip" onclick="sendQuick(this)">Pomodoro technique tips</button>
+          <button class="quick-chip" onclick="sendQuick(this)">How to avoid exam stress?</button>
+          <button class="quick-chip" onclick="sendQuick(this)">Spaced repetition explained</button>
+          <button class="quick-chip" onclick="sendQuick(this)">Best note-taking methods</button>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Type your question…" onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="btn btn-primary" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+      <div class="powered-by">Powered by <span>IBM Granite (Demo Mode)</span></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+const state = {
+  name: '', course: '', semester: '', examDate: '',
+  subjects: [], weakSubjects: [],
+  weekdayHours: 3, weekendHours: 5,
+  preferredTime: 'evening', sessionLength: 60
+};
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { home: 0, setup: 1, plan: 2, chat: 3 };
+  if (map[id] !== undefined) tabs[map[id]].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ═══════════════════════════════════════════════════
+   STEP WIZARD
+═══════════════════════════════════════════════════ */
+let currentStep = 1;
+function goStep(n) {
+  if (n === 2) {
+    const name = document.getElementById('s-name').value.trim();
+    const course = document.getElementById('s-course').value.trim();
+    const sem = document.getElementById('s-semester').value;
+    if (!name || !course || !sem) { alert('Please fill in Name, Course, and Semester.'); return; }
+  }
+  if (n === 3) {
+    if (state.subjects.length === 0) { alert('Please add at least one subject.'); return; }
+  }
+  document.getElementById('setup-step' + currentStep).style.display = 'none';
+  document.getElementById('setup-step' + n).style.display = 'block';
+  ['step1-dot','step2-dot','step3-dot'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i + 1 < n) el.classList.add('done');
+    if (i + 1 === n) el.classList.add('active');
+    const dot = el.querySelector('.step-dot');
+    dot.textContent = i + 1 < n ? '✓' : (i + 1);
+  });
+  currentStep = n;
+}
+
+/* ═══════════════════════════════════════════════════
+   TAG INPUT
+═══════════════════════════════════════════════════ */
+function makeTagInput(inputId, wrapperId, store) {
+  const input = document.getElementById(inputId);
+  const wrapper = document.getElementById(wrapperId);
+  function addTag(val) {
+    const v = val.trim().replace(/,/g,'');
+    if (!v || store.includes(v)) return;
+    store.push(v);
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = v + '<span class="remove" onclick="removeTag(this,\'' + wrapperId + '\',\'' + inputId + '\')">×</span>';
+    wrapper.insertBefore(tag, input);
+  }
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input.value);
+      input.value = '';
+    }
+    if (e.key === 'Backspace' && !input.value && store.length) {
+      store.pop();
+      wrapper.querySelectorAll('.tag').forEach((t,i,a) => { if(i===a.length-1) t.remove(); });
+    }
+  });
+  input.addEventListener('blur', () => { if(input.value) { addTag(input.value); input.value=''; } });
+}
+
+function removeTag(btn, wrapperId, inputId) {
+  const tag = btn.parentElement;
+  const store = wrapperId === 'subjects-wrapper' ? state.subjects : state.weakSubjects;
+  const text = tag.textContent.replace('×','').trim();
+  const idx = store.indexOf(text);
+  if (idx > -1) store.splice(idx, 1);
+  tag.remove();
+}
+
+makeTagInput('subj-input',  'subjects-wrapper', state.subjects);
+makeTagInput('weak-input',  'weak-wrapper',     state.weakSubjects);
+
+/* ═══════════════════════════════════════════════════
+   IBM GRANITE – MOCK AI ENGINE
+═══════════════════════════════════════════════════ */
+const GraniteEngine = {
+
+  /** Weighted subject allocation (weak subjects get more hours) */
+  allocateHours(subjects, weakSubjects, totalWeeklyHours) {
+    const base = 1;
+    const weakBonus = 1.5;
+    let weights = subjects.map(s => weakSubjects.includes(s) ? base + weakBonus : base);
+    const total = weights.reduce((a,b) => a+b, 0);
+    return subjects.map((s, i) => ({
+      subject: s,
+      hours: Math.round((weights[i] / total) * totalWeeklyHours * 10) / 10,
+      isWeak: weakSubjects.includes(s)
+    }));
+  },
+
+  /** Build a weekly timetable */
+  buildTimetable(profile, allocation) {
+    const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const slots = [];
+    const n = profile.subjects.length;
+    if (n === 0) return [];
+
+    const timeSlots = {
+      morning:   ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM'],
+      afternoon: ['12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM'],
+      evening:   ['5:00 PM','6:00 PM','7:00 PM','8:00 PM'],
+      night:     ['9:00 PM','10:00 PM','11:00 PM','12:00 AM']
+    };
+    const preferred = timeSlots[profile.preferredTime] || timeSlots['evening'];
+
+    days.forEach((day, di) => {
+      const isWeekend = di >= 5;
+      const hoursToday = isWeekend ? profile.weekendHours : profile.weekdayHours;
+      const sessionsToday = Math.max(1, Math.floor((hoursToday * 60) / profile.sessionLength));
+      const daySessions = [];
+
+      for (let s = 0; s < sessionsToday; s++) {
+        const subj = profile.subjects[(di * 3 + s) % n];
+        const isWeak = profile.weakSubjects.includes(subj);
+        const time = preferred[s % preferred.length];
+        const type = isWeak ? 'revision' : 'study';
+        daySessions.push({ time, subject: subj, type });
+      }
+
+      // Add a break or rest
+      if (sessionsToday > 1) daySessions.splice(Math.floor(sessionsToday/2), 0, { time: '', subject: '☕ Break', type: 'rest' });
+
+      slots.push({ day, sessions: daySessions });
+    });
+    return slots;
+  },
+
+  /** Revision plan for next N weeks */
+  buildRevisionPlan(subjects, weakSubjects, examDate) {
+    const weeks = [];
+    const today = new Date();
+    const exam = examDate ? new Date(examDate) : new Date(today.getTime() + 28*24*60*60*1000);
+    const daysLeft = Math.max(1, Math.ceil((exam - today) / (1000*60*60*24)));
+    const weeksLeft = Math.max(1, Math.ceil(daysLeft / 7));
+    const useWeeks = Math.min(weeksLeft, 4);
+    const allSubj = [...subjects];
+
+    for (let w = 0; w < useWeeks; w++) {
+      const wkLabel = w === 0 ? 'This Week' : `Week ${w+1}`;
+      const focus = [];
+      // rotate subjects across weeks, weak ones appear every week
+      weakSubjects.forEach(s => focus.push({ subject: s, type: 'weak' }));
+      const normal = allSubj.filter(s => !weakSubjects.includes(s));
+      const normalThis = normal.slice((w * 2) % Math.max(1, normal.length), (w * 2 + 2) % Math.max(1, normal.length) + 2);
+      normalThis.forEach(s => focus.push({ subject: s, type: 'normal' }));
+      weeks.push({ week: wkLabel, daysLeft: daysLeft - w*7, subjects: focus });
+    }
+    return weeks;
+  },
+
+  /** Daily goals */
+  buildDailyGoals(profile, allocation) {
+    const goals = [];
+    const sessionMins = profile.sessionLength;
+    const n = Math.min(3, profile.subjects.length);
+    const todaySubjects = allocation.slice(0, n);
+
+    todaySubjects.forEach(a => {
+      const sessions = Math.max(1, Math.round(a.hours / 7));
+      goals.push(`Complete ${sessions} × ${sessionMins}-min session${sessions>1?'s':''} of <strong>${a.subject}</strong>${a.isWeak ? ' (priority – weak subject)' : ''}`);
+    });
+
+    goals.push('Review notes from last session and add 5 flashcards');
+    goals.push('Take a 5-min break after every study session');
+    if (profile.weakSubjects.length)
+      goals.push(`Spend 20 extra minutes on <strong>${profile.weakSubjects[0]}</strong> problem sets`);
+    return goals;
+  },
+
+  /** Personalised study tips */
+  buildTips(profile) {
+    const tips = [];
+    const time = profile.preferredTime;
+    const session = profile.sessionLength;
+    const weak = profile.weakSubjects;
+
+    if (time === 'morning') tips.push('You study best in the morning — tackle the hardest topics first while your mind is fresh.');
+    if (time === 'evening' || time === 'night') tips.push('Evening studiers often benefit from reviewing notes right before sleep to consolidate memory.');
+    if (time === 'afternoon') tips.push('Combat the afternoon slump with a 10-min walk before your study block.');
+
+    if (session <= 30) tips.push('With 25-min Pomodoro sessions, use the 5-min break to do a quick mental recap — do NOT check social media.');
+    else if (session >= 90) tips.push('For long sessions (90 min+), use active recall at the 45-min mark: close your notes and write down everything you remember.');
+
+    if (weak.length) tips.push(`For your weak subject(s) (${weak.join(', ')}): start each session with a 5-min mind dump of what you already know before opening any material.`);
+
+    tips.push('Use the "Feynman Technique": explain each concept out loud in simple language as if teaching a child.');
+    tips.push('Create a dedicated, distraction-free study zone — even a single desk corner trains your brain to enter focus mode.');
+    tips.push('Interleave subjects within a study block (e.g., 30 min Math → 30 min Physics) to improve long-term retention.');
+    return tips.slice(0, 5);
+  }
+};
+
+/* ═══════════════════════════════════════════════════
+   PLAN GENERATION
+═══════════════════════════════════════════════════ */
+function generatePlan() {
+  const name = document.getElementById('s-name').value.trim();
+  const course = document.getElementById('s-course').value.trim();
+  const semester = document.getElementById('s-semester').value;
+  const examDate = document.getElementById('s-exam-date').value;
+  const weekdayHours = parseInt(document.getElementById('s-wkday').value);
+  const weekendHours = parseInt(document.getElementById('s-wkend').value);
+  const preferredTime = document.getElementById('s-pref').value;
+  const sessionLength = parseInt(document.getElementById('s-session').value);
+
+  if (state.subjects.length === 0) { alert('Please add at least one subject.'); return; }
+
+  Object.assign(state, { name, course, semester, examDate, weekdayHours, weekendHours, preferredTime, sessionLength });
+
+  const totalWeeklyHours = weekdayHours * 5 + weekendHours * 2;
+  const allocation = GraniteEngine.allocateHours(state.subjects, state.weakSubjects, totalWeeklyHours);
+  const timetable  = GraniteEngine.buildTimetable(state, allocation);
+  const revision   = GraniteEngine.buildRevisionPlan(state.subjects, state.weakSubjects, examDate);
+  const goals      = GraniteEngine.buildDailyGoals(state, allocation);
+  const tips       = GraniteEngine.buildTips(state);
+
+  renderPlan({ allocation, timetable, revision, goals, tips });
+  showPage('plan');
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER PLAN
+═══════════════════════════════════════════════════ */
+function renderPlan({ allocation, timetable, revision, goals, tips }) {
+  document.getElementById('plan-empty').style.display = 'none';
+  document.getElementById('plan-content').style.display = 'block';
+
+  // Header
+  document.getElementById('plan-greeting').textContent = `${state.name}'s Study Plan`;
+  const examStr = state.examDate ? ` · Exam on ${new Date(state.examDate).toDateString()}` : '';
+  document.getElementById('plan-meta').textContent = `${state.course} · ${state.semester}${examStr}`;
+
+  // Subject cards
+  const maxH = Math.max(...allocation.map(a => a.hours));
+  document.getElementById('subject-cards').innerHTML = allocation.map(a => `
+    <div class="subject-card">
+      <div class="s-name">${a.subject} ${a.isWeak ? '<span class="badge badge-purple">Weak</span>' : ''}</div>
+      <div class="s-hours">${a.hours} hrs/week</div>
+      <div class="s-bar"><div class="s-bar-fill ${a.isWeak?'weak':''}" style="width:${Math.round(a.hours/maxH*100)}%"></div></div>
+    </div>`).join('');
+
+  // Timetable
+  const ttEl = document.getElementById('timetable');
+  ttEl.innerHTML = `<thead><tr><th>Day</th><th>Sessions</th></tr></thead><tbody>` +
+    timetable.map(row => `
+      <tr>
+        <td><strong>${row.day}</strong></td>
+        <td>${row.sessions.map(s => `<span class="slot-badge slot-${s.type}">${s.time ? s.time+' · ':''} ${s.subject}</span>`).join('')}</td>
+      </tr>`).join('') +
+    `</tbody>`;
+
+  // Revision plan
+  const revEl = document.getElementById('revision-plan');
+  revEl.innerHTML = revision.map(w => `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;">${w.week} <span style="color:var(--muted);font-weight:400;">(${w.daysLeft} days to exam)</span></div>
+      <div class="revision-row">
+        ${w.subjects.map(s => `<span class="rev-chip ${s.type==='weak'?'weak':''}">${s.subject}</span>`).join('')}
+      </div>
+    </div>`).join('');
+
+  // Daily goals
+  document.getElementById('daily-goals').innerHTML = goals.map(g => `<li>${g}</li>`).join('');
+
+  // Tips
+  document.getElementById('study-tips').innerHTML = tips.map(t => `<li>${t}</li>`).join('');
+
+  // Update chat context
+  updateChatContext();
+}
+
+/* ═══════════════════════════════════════════════════
+   CHAT ASSISTANT – GRANITE MOCK ENGINE
+═══════════════════════════════════════════════════ */
+const chatKB = {
+  // Subject-agnostic knowledge base for demo responses
+  keywords: {
+    newton: { title: "Newton's Laws of Motion", body: `<p><strong>Newton's Three Laws:</strong></p><ul><li><strong>1st (Inertia):</strong> An object stays at rest or in uniform motion unless acted upon by an external force.</li><li><strong>2nd (F=ma):</strong> Force equals mass × acceleration. The harder you push, the faster it accelerates.</li><li><strong>3rd (Action-Reaction):</strong> For every action, there is an equal and opposite reaction.</li></ul><p><strong>Memory tip:</strong> "Still, Speed, Swap" — stays still, speeds up, swaps forces.</p>` },
+    pomodoro: { title: "Pomodoro Technique", body: `<p>The <strong>Pomodoro Technique</strong> is a time-management method:</p><ul><li>Study for <strong>25 minutes</strong> (1 Pomodoro)</li><li>Take a <strong>5-minute break</strong></li><li>After 4 Pomodoros, take a <strong>20–30 min long break</strong></li></ul><p>It fights procrastination by making tasks feel less overwhelming. Great for difficult subjects!</p>` },
+    stress: { title: "Managing Exam Stress", body: `<p>Evidence-based ways to reduce exam anxiety:</p><ul><li><strong>Plan ahead:</strong> A clear timetable removes the "what should I study?" panic.</li><li><strong>Sleep:</strong> 7–8 hours consolidates memory far better than all-nighters.</li><li><strong>Exercise:</strong> Even 20 min of walking releases stress-reducing endorphins.</li><li><strong>Breathing:</strong> 4-7-8 breathing (inhale 4s, hold 7s, exhale 8s) calms the nervous system instantly.</li><li><strong>Past papers:</strong> Familiarity with exam format dramatically reduces anxiety.</li></ul>` },
+    spaced: { title: "Spaced Repetition", body: `<p><strong>Spaced repetition</strong> is reviewing material at increasing intervals:</p><ul><li>Day 1 → review on Day 2 → Day 4 → Day 8 → Day 16…</li><li>Each review resets the "forgetting curve" at a higher baseline.</li><li>Tools: Anki (free flashcard app) automates the scheduling.</li></ul><p>StudyMate AI already builds spaced repetition into your revision plan!</p>` },
+    notes: { title: "Note-Taking Methods", body: `<p>Top note-taking techniques for students:</p><ul><li><strong>Cornell Method:</strong> Divide page into notes, cues, and summary. Best for lectures.</li><li><strong>Mind Maps:</strong> Great for subjects with many connected concepts (Biology, History).</li><li><strong>Outline Method:</strong> Hierarchical bullet points — ideal for linear subjects like Law.</li><li><strong>Feynman Notes:</strong> After reading, close the book and write/explain in simple words.</li></ul>` },
+    feynman: { title: "Feynman Technique", body: `<p>The <strong>Feynman Technique</strong> has 4 steps:</p><ul><li>1. <strong>Choose</strong> a concept to learn.</li><li>2. <strong>Explain</strong> it as if teaching a child — in simple words, no jargon.</li><li>3. <strong>Identify gaps</strong> — where did you get stuck? Go back and re-read those parts.</li><li>4. <strong>Simplify</strong> — refine your explanation until it's crystal clear.</li></ul><p>This forces deep understanding, not just surface memorisation.</p>` },
+    calculus: { title: "Calculus Basics", body: `<p><strong>Key Calculus Concepts:</strong></p><ul><li><strong>Derivative:</strong> Rate of change (slope of a curve). d/dx(xⁿ) = nxⁿ⁻¹</li><li><strong>Integral:</strong> Area under a curve. ∫xⁿ dx = xⁿ⁺¹/(n+1) + C</li><li><strong>Chain Rule:</strong> d/dx[f(g(x))] = f'(g(x)) · g'(x)</li><li><strong>Fundamental Theorem:</strong> Differentiation and integration are inverses.</li></ul><p><strong>Tip:</strong> Practice 5 problems daily — calculus is a skill, not just theory.</p>` },
+    physics: { title: "Physics Study Guide", body: `<p><strong>Core Physics Areas:</strong></p><ul><li><strong>Mechanics:</strong> Newton's laws, kinematics, energy (KE = ½mv²)</li><li><strong>Thermodynamics:</strong> Heat, entropy, ideal gas law (PV = nRT)</li><li><strong>Electromagnetism:</strong> Coulomb's law, Ohm's law (V=IR), Maxwell's equations</li><li><strong>Waves & Optics:</strong> Reflection, refraction, wave equation (v = fλ)</li></ul><p><strong>Strategy:</strong> Derive formulas from first principles — don't just memorise them.</p>` },
+    chemistry: { title: "Chemistry Tips", body: `<p><strong>Chemistry Study Strategy:</strong></p><ul><li><strong>Organic Chemistry:</strong> Learn reaction mechanisms, not just products. Arrows show electron movement.</li><li><strong>Inorganic:</strong> Use the periodic table patterns — groups share properties.</li><li><strong>Equations:</strong> Always balance equations. Check atoms and charges on both sides.</li><li><strong>Moles:</strong> n = m/M. Master mole calculations first — everything else builds on it.</li></ul>` },
+    math: { title: "Mathematics Study Tips", body: `<p><strong>How to Excel at Mathematics:</strong></p><ul><li>Never just read solutions — solve problems yourself, step by step.</li><li>Understand <em>why</em> a method works, not just <em>how</em>.</li><li>Practice past exam papers under timed conditions.</li><li>For proofs: write out what is given, what you want to show, then work backwards.</li><li>Build a "formula sheet" of key results and review it weekly.</li></ul>` },
+    programming: { title: "Programming / CS Tips", body: `<p><strong>Study Tips for Computer Science:</strong></p><ul><li><strong>Algorithms:</strong> Trace through examples by hand before coding.</li><li><strong>Data Structures:</strong> Draw them — trees, graphs, linked lists make much more sense visually.</li><li><strong>Debugging:</strong> Print intermediate values; read error messages carefully.</li><li><strong>Projects:</strong> Build small things — the best way to learn CS is to write actual code daily.</li></ul>` },
+  },
+
+  findResponse(query, studentContext) {
+    const q = query.toLowerCase();
+    // Check for student-specific context
+    if ((q.includes('my') || q.includes('plan') || q.includes('timetable') || q.includes('schedule')) && studentContext.name) {
+      return this.profileResponse(studentContext);
+    }
+    if (q.includes('weak') && studentContext.weakSubjects && studentContext.weakSubjects.length) {
+      return this.weakSubjectResponse(studentContext);
+    }
+    // keyword matching
+    for (const [key, val] of Object.entries(this.keywords)) {
+      if (q.includes(key)) return `<p><strong>${val.title}</strong></p>${val.body}`;
+    }
+    // Subject-specific
+    if (q.match(/\b(math|algebra|geometry|statistics|probability)\b/)) return `<p><strong>Mathematics Study Tips</strong></p>${this.keywords.math.body}`;
+    if (q.match(/\b(physics|mechanics|thermodynamics|electro)\b/)) return `<p><strong>Physics Study Guide</strong></p>${this.keywords.physics.body}`;
+    if (q.match(/\b(chem|organic|inorganic|stoichiometry|mole)\b/)) return `<p><strong>Chemistry Tips</strong></p>${this.keywords.chemistry.body}`;
+    if (q.match(/\b(code|coding|program|algorithm|data structure|java|python|c\+\+)\b/)) return `<p><strong>Programming Tips</strong></p>${this.keywords.programming.body}`;
+    if (q.match(/\b(remember|memorize|memory|forget|recall)\b/)) return this.memoryTips();
+    if (q.match(/\b(exam|test|paper|revision|revise)\b/)) return this.examTips(studentContext);
+    if (q.match(/\b(motivat|procrastinat|focus|distract|concentrat)\b/)) return this.motivationTips();
+    if (q.match(/\b(time|schedule|plan|timetable|organize)\b/)) return this.timeTips();
+    return this.genericResponse(query);
+  },
+
+  profileResponse(ctx) {
+    if (!ctx.name) return `<p>I don't have your profile yet. Please complete the <strong>Setup</strong> first and I'll give you personalised advice!</p>`;
+    const daysLeft = ctx.examDate ? Math.max(0, Math.ceil((new Date(ctx.examDate)-new Date())/(1000*60*60*24))) : null;
+    return `<p>Here's a quick summary of your plan, <strong>${ctx.name}</strong>:</p>
+      <ul>
+        <li><strong>Course:</strong> ${ctx.course} · ${ctx.semester}</li>
+        <li><strong>Subjects:</strong> ${ctx.subjects.join(', ') || 'None added'}</li>
+        ${ctx.weakSubjects.length ? `<li><strong>Focus areas (weak):</strong> ${ctx.weakSubjects.join(', ')}</li>` : ''}
+        <li><strong>Study hours:</strong> ${ctx.weekdayHours}h/weekday, ${ctx.weekendHours}h/weekend</li>
+        ${daysLeft !== null ? `<li><strong>Days to exam:</strong> ${daysLeft} days</li>` : ''}
+      </ul>
+      <p>Head to the <strong>My Plan</strong> tab to see your full timetable and revision schedule!</p>`;
+  },
+
+  weakSubjectResponse(ctx) {
+    const w = ctx.weakSubjects;
+    return `<p>For your weak subject(s) — <strong>${w.join(', ')}</strong> — here's my advice:</p>
+      <ul>
+        <li>Schedule these <strong>first</strong> in each study session when your energy is highest.</li>
+        <li>Use the <strong>Feynman Technique</strong>: explain the topic out loud in simple words.</li>
+        <li>Don't just re-read — solve practice problems actively.</li>
+        <li>Find one good YouTube explanation video per topic; sometimes a different teacher's perspective clicks.</li>
+        <li>Your timetable already allocates <strong>extra hours</strong> to these subjects automatically.</li>
+      </ul>`;
+  },
+
+  memoryTips() {
+    return `<p><strong>Science-Backed Memory Techniques:</strong></p>
+      <ul>
+        <li><strong>Active Recall:</strong> Test yourself instead of re-reading. Flashcards, practice quizzes, blank-page recall.</li>
+        <li><strong>Spaced Repetition:</strong> Review material at increasing intervals (1 day → 3 days → 7 days…).</li>
+        <li><strong>Elaborative Interrogation:</strong> Ask "why is this true?" for every fact you learn.</li>
+        <li><strong>Sleep:</strong> Memory consolidation happens during deep sleep — never sacrifice sleep for extra study time.</li>
+        <li><strong>Mnemonics:</strong> Create acronyms, rhymes, or visual stories for lists and formulas.</li>
+      </ul>`;
+  },
+
+  examTips(ctx) {
+    const d = ctx.examDate ? Math.max(0, Math.ceil((new Date(ctx.examDate)-new Date())/(1000*60*60*24))) : null;
+    const timeNote = d !== null ? `<p>You have <strong>${d} days</strong> until your exam — ${d > 14 ? 'plenty of time to build deep understanding' : d > 7 ? 'focus on consolidation and practice papers' : 'prioritise past papers and weak spots now'}.</p>` : '';
+    return `${timeNote}<p><strong>Exam Preparation Strategy:</strong></p>
+      <ul>
+        <li>Solve at least 3 full past papers under timed exam conditions.</li>
+        <li>Identify and revisit every question you got wrong.</li>
+        <li>Create a one-page cheat sheet per subject (then don't use it in the exam — the act of making it is the revision).</li>
+        <li>Sleep 8 hours the night before; avoid new material on exam eve.</li>
+        <li>Arrive early, bring water, read all questions before starting.</li>
+      </ul>`;
+  },
+
+  motivationTips() {
+    return `<p><strong>Staying Focused and Motivated:</strong></p>
+      <ul>
+        <li><strong>Start tiny:</strong> Commit to just 5 minutes. Starting is the hardest part — momentum builds naturally.</li>
+        <li><strong>Environment design:</strong> Put your phone in another room. Out of sight = out of mind.</li>
+        <li><strong>Implementation intentions:</strong> "I will study X at Y o'clock in Z location" is 3× more effective than "I'll study later."</li>
+        <li><strong>Reward loops:</strong> Small reward after each Pomodoro (a snack, a 5-min break, one video).</li>
+        <li><strong>Track progress:</strong> Cross off completed goals — visual progress is surprisingly motivating.</li>
+      </ul>`;
+  },
+
+  timeTips() {
+    return `<p><strong>Time Management for Students:</strong></p>
+      <ul>
+        <li><strong>Time-blocking:</strong> Assign each subject a specific time slot — don't study "whenever."</li>
+        <li><strong>Weekly review:</strong> Every Sunday, plan next week's study sessions in 15 minutes.</li>
+        <li><strong>Parkinson's Law:</strong> Work expands to fill available time — set a timer and finish before it rings.</li>
+        <li><strong>Priority matrix:</strong> Urgent + Important first (upcoming exam topics), then Important + Not Urgent (long-term projects).</li>
+        <li>Your StudyMate timetable handles this automatically — just follow it!</li>
+      </ul>`;
+  },
+
+  genericResponse(q) {
+    const starters = [
+      `That's a great question about "${q.substring(0,40)}${q.length>40?'…':''}"! `,
+      `Let me help you with that. `,
+      `Good question! `
+    ];
+    const s = starters[Math.floor(Math.random()*starters.length)];
+    return `<p>${s}Here are some strategies to help:</p>
+      <ul>
+        <li>Break the topic into smaller, manageable chunks and tackle one at a time.</li>
+        <li>Use active recall — after reading a section, close the book and write down everything you remember.</li>
+        <li>Find a past exam or practice question on this topic and attempt it immediately.</li>
+        <li>If you're stuck, try explaining the concept out loud (Feynman Technique) — gaps become obvious quickly.</li>
+      </ul>
+      <p>If you'd like a more specific answer, try asking about a particular concept, formula, or subject — I'll do my best to explain it clearly!</p>`;
+  }
+};
+
+let studentContext = {};
+function updateChatContext() {
+  studentContext = { ...state };
+}
+
+/* ═══════════════════════════════════════════════════
+   CHAT UI
+═══════════════════════════════════════════════════ */
+function sendQuick(btn) {
+  document.getElementById('chat-input').value = btn.textContent;
+  sendChat();
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  appendMessage('user', `<p>${escHtml(msg)}</p>`);
+
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  const typingEl = document.createElement('div');
+  typingEl.className = 'chat-msg ai';
+  typingEl.id = typingId;
+  typingEl.innerHTML = `<div class="chat-avatar">G</div><div class="bubble typing"><span></span><span></span><span></span></div>`;
+  document.getElementById('chat-messages').appendChild(typingEl);
+  scrollChat();
+
+  // Simulate AI processing delay
+  const delay = 600 + Math.random() * 800;
+  setTimeout(() => {
+    typingEl.remove();
+    const response = chatKB.findResponse(msg, studentContext);
+    appendMessage('ai', response);
+  }, delay);
+}
+
+function appendMessage(role, html) {
+  const el = document.createElement('div');
+  el.className = `chat-msg ${role}`;
+  const avatarText = role === 'ai' ? 'G' : (state.name ? state.name[0].toUpperCase() : 'U');
+  el.innerHTML = `<div class="chat-avatar">${avatarText}</div><div class="bubble">${html}</div>`;
+  document.getElementById('chat-messages').appendChild(el);
+  scrollChat();
+}
+
+function scrollChat() {
+  const el = document.getElementById('chat-messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
